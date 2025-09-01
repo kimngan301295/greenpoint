@@ -123,7 +123,9 @@ def auth_page():
                 st.error("Sai số điện thoại hoặc mật khẩu")
 
     with tab2:
-   st.subheader("Đăng ký tài khoản mới")
+   if choice == "Đăng ký":
+    st.subheader("Đăng ký tài khoản mới")
+    username = st.text_input("Tên đăng nhập")
         with st.form("reg_form"):
             name = st.text_input("Họ và tên")
             phone_r = st.text_input("Số điện thoại")
