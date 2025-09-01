@@ -1,113 +1,55 @@
 import streamlit as st
 
-# --------------------------
-# Fake Database (tạm thời)
-# --------------------------
-if "users" not in st.session_state:
-    st.session_state["users"] = []  # Danh sách người dùng đã đăng ký
-if "current_user" not in st.session_state:
-    st.session_state["current_user"] = None
-if "page" not in st.session_state:
-    st.session_state["page"] = "login"
+# Khởi tạo session state để lưu người dùng
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "role" not in st.session_state:
+    st.session_state.role = None
 
-# --------------------------
-# Hàm xử lý đăng ký
-# --------------------------
-def register():
-    st.title("📌 Đăng ký tài khoản")
-    name = st.text_input("Họ và tên")
-    phone = st.text_input("Số điện thoại")
-    password = st.text_input("Mật khẩu", type="password")
-    role = st.selectbox("Chức vụ", ["Học sinh", "Ban cán sự lớp", "Giáo viên chủ nhiệm", "Ban quản lý nhà trường"])
-    region = st.text_input("Khu vực (Tỉnh/TP, Quận/Huyện, Xã/Phường)")
-    school = st.text_input("Tên trường")
+# -------------------------
+# Trang đăng ký / đăng nhập
+# -------------------------
+def login_page():
+    st.title("🔑 Đăng nhập / Đăng ký")
 
-    if st.button("Đăng ký"):
-        user = {"name": name, "phone": phone, "password": password,
-                "role": role, "region": region, "school": school}
-        st.session_state["users"].append(user)
-        st.success("Đăng ký thành công! Hãy đăng nhập.")
-        st.session_state["page"] = "login"
+    with st.form("login_form"):
+        fullname = st.text_input("Họ và tên")
+        phone = st.text_input("Số điện thoại")
+        password = st.text_input("Mật khẩu", type="password")
+        role = st.selectbox("Chức vụ", ["Học sinh", "Giáo viên thường", "Giáo viên quản lý"])
+        area = st.text_input("Khu vực")
+        school = st.text_input("Tên trường")
 
-    if st.button("Đã có tài khoản? Đăng nhập"):
-        st.session_state["page"] = "login"
+        submitted = st.form_submit_button("Tiếp theo")
 
-# --------------------------
-# Hàm xử lý đăng nhập
-# --------------------------
-def login():
-    st.title("🔑 Đăng nhập")
-    phone = st.text_input("Số điện thoại")
-    password = st.text_input("Mật khẩu", type="password")
+        if submitted:
+            if fullname and phone and password:
+                st.session_state.logged_in = True
+                st.session_state.role = role
+                st.success("Đăng nhập thành công ✅")
+            else:
+                st.error("Vui lòng điền đầy đủ thông tin!")
 
-    if st.button("Đăng nhập"):
-        for user in st.session_state["users"]:
-            if user["phone"] == phone and user["password"] == password:
-                st.session_state["current_user"] = user
-                st.success("Đăng nhập thành công!")
-                st.session_state["page"] = "dashboard"
-                return
-        st.error("Sai số điện thoại hoặc mật khẩu!")
+# -------------------------
+# Giao diện theo chức vụ
+# -------------------------
+def main_app():
+    role = st.session_state.role
 
-    if st.button("Chưa có tài khoản? Đăng ký"):
-        st.session_state["page"] = "register"
+    if role == "Giáo viên quản lý":
+        st.title("📊 Giao diện Giáo viên quản lý")
+        st.write("Xin chào thầy/cô! Đây là nơi quản lý toàn bộ hệ thống.")
+    
+    elif role == "Giáo viên thường":
+        st.title("📘 Giao diện Giáo viên")
+        st.write("Xin chào thầy/cô! Đây là nơi theo dõi và hỗ trợ học sinh.")
 
-# --------------------------
-# Dashboard theo chức vụ
-# --------------------------
-def show_dashboard(user):
-    role = user["role"]
-    st.sidebar.write(f"👤 {user['name']} ({role})")
-    st.sidebar.write(f"🏫 {user['school']} - {user['region']}")
-    st.sidebar.button("Đăng xuất", on_click=lambda: st.session_state.update({"current_user": None, "page": "login"}))
-
-    if role == "Ban quản lý nhà trường":
-        st.title("🏫 Trang quản lý thi đua toàn trường")
-        st.write("Quản lý tất cả trường, quận, tỉnh.")
-
-    elif role == "Giáo viên chủ nhiệm":
-        st.title("👨‍🏫 Trang quản lý của GVCN")
-        st.write("Xem và xác nhận điểm thi đua của lớp mình.")
-
-    elif role == "Ban cán sự lớp":
-        st.title("🧑‍🎓 Trang Ban cán sự lớp")
-st.write("Cộng/trừ điểm hành vi xanh cho học sinh.")
-
- if role == "Giáo viên quản lý":
-    st.title("📚 Giao diện Giáo viên quản lý")
-    st.write("Đây là nơi quản lý lớp học, học sinh và giáo viên.")
-
-elif role == "Học sinh":
-    st.title("👩‍👩‍👧‍👦 Giao diện Học sinh")
-    st.write("Đây là nơi học sinh xem điểm, hành vi xanh, và nhiệm vụ.")
-
-elif role == "Giáo viên":
-    st.title("👨‍🏫 Giao diện Giáo viên")
-    st.write("Đây là nơi giáo viên chấm điểm hành vi xanh cho học sinh.")
-
-elif role == "Ban cán sự":
-    st.title("📝 Giao diện Ban cán sự")
-    st.write("Đây là nơi ban cán sự theo dõi và tổng hợp điểm hành vi xanh.")
-    st.title("📊 Giao diện Giáo viên Quản lý")
-    st.write("Xem điểm thi đua của tất cả các lớp.")
-elif role == "Ban cán sự lớp":
-    st.title("📝 Giao diện Ban cán sự lớp")
-    st.write("Quản lý điểm thi đua của lớp mình.")
-elif role == "Học sinh":
-    st.title("👩‍👩‍👧‍👦 Giao diện Học sinh")
-    st.write("Xem và đóng góp điểm hành vi xanh cho bản thân.")
-else:
-    st.warning("Vui lòng chọn chức vụ để tiếp tục!")
+    elif role == "Học sinh":
         st.title("👩‍👩‍👧‍👦 Giao diện Học sinh")
-        st.write("Xem điểm cá nhân và điểm lớp.")
+        st.write("Chào bạn học sinh! Đây là nơi tham gia các hoạt động.")
 
-# --------------------------
-# Điều hướng chính
-# --------------------------
-if st.session_state["page"] == "register":
-    register()
-elif st.session_state["page"] == "login":
-    login()
-elif st.session_state["page"] == "dashboard":
-    show_dashboard(st.session_state["current_user"])
-
+# -------------------------
+# Chạy app
+# -------------------------
+def main():
+    if not st.session
