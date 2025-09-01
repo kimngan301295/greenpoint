@@ -1,4 +1,4 @@
-# app.py — GreenPoint Full Working Demo v3
+# app.py — GreenPoint Full Dashboard v4
 import streamlit as st
 import uuid
 import json
@@ -9,7 +9,6 @@ from io import BytesIO
 import csv
 
 st.set_page_config(page_title="GreenPoint — Thi đua xanh", layout="wide")
-
 DATA_FILE = "data.json"
 
 # ------------------------
@@ -59,14 +58,13 @@ def seed_data():
     return {"schools":schools,"classes":classes,"users":users,"actions":actions}
 
 # ------------------------
-# Init session
+# Session init
 # ------------------------
 if "app_data" not in st.session_state:
     st.session_state["app_data"] = load_data()
 else:
     if not isinstance(st.session_state["app_data"],dict):
         st.session_state["app_data"] = seed_data()
-
 if "current_user_id" not in st.session_state:
     st.session_state["current_user_id"] = None
 if "page" not in st.session_state:
@@ -77,13 +75,13 @@ if "page" not in st.session_state:
 # ------------------------
 def find_user_by_phone(phone):
     for u in st.session_state["app_data"]["users"]:
-        if u.get("phone") == phone:
+        if u.get("phone")==phone:
             return u
     return None
 
 def find_user_by_id(uid):
     for u in st.session_state["app_data"]["users"]:
-        if u.get("id") == uid:
+        if u.get("id")==uid:
             return u
     return None
 
@@ -154,7 +152,6 @@ def compute_points_for_class(classId,days=None):
 def auth_page():
     st.title("🌱 GreenPoint — Đăng nhập / Đăng ký")
     tab_login,tab_register = st.tabs(["Đăng nhập","Đăng ký"])
-
     with tab_login:
         st.subheader("Đăng nhập")
         li_phone = st.text_input("Số điện thoại",key="li_phone")
@@ -168,7 +165,6 @@ def auth_page():
                 st.experimental_rerun()
             else:
                 st.error("Sai số điện thoại hoặc mật khẩu")
-
     with tab_register:
         st.subheader("Đăng ký tài khoản mới")
         with st.form("reg_form"):
@@ -206,13 +202,36 @@ def auth_page():
                         st.experimental_rerun()
 
 # ------------------------
-# Main
+# Dashboard (role-based) — demo structure
 # ------------------------
-def main():
-    if st.session_state["page"]=="auth":
-        auth_page()
-    else:
-        dashboard_page()
-
-if __name__=="__main__":
-    main()
+def dashboard_page():
+    uid = st.session_state.get("current_user_id")
+    user = find_user_by_id(uid)
+    if not user:
+        st.session_state["page"]="auth"
+        st.experimental_rerun()
+        return
+    st.sidebar.markdown(f"**{user.get('name')}**  \n_{user.get('role')}_")
+    if st.sidebar.button("Đăng xuất"):
+        st.session_state["current_user_id"]=None
+        st.session_state["page"]="auth"
+        st.experimental_rerun()
+    # Tabs for all roles
+    tabs = ["Trang chính","Upload ảnh xanh","Xem điểm & hạng","Cài đặt"]
+    tab_choice = st.sidebar.radio("Chọn tab",tabs)
+    st.header(f"Xin chào, {user.get('name')} — {user.get('role')}")
+    st.info("App ưu tiên nhẹ nhàng: mục tiêu cá nhân ≥10/tuần, lớp ≥100/30 ngày — khuyến khích, không gây áp lực.")
+    # Tab implementations (Học sinh & Ban cán sự)
+    if user.get("role") in ["Học sinh","Ban cán sự lớp"]:
+        if tab_choice=="Trang chính":
+            st.subheader("Tổng quan cá nhân & lớp")
+            weekly_pts = compute_points_for_user(uid,7)
+            st.metric("Điểm tuần",weekly_pts)
+            st.progress(min(1.0,weekly_pts/10))
+            if user.get("classId"):
+                class_pts = compute_points_for_class(user.get("classId"),30)
+                st.write(f"Lớp: {find_class_by_id(user.get('classId')).get('name')} — {class_pts}/100")
+                st.progress(min(1.0,class_pts/100))
+        elif tab_choice=="Upload ảnh xanh":
+            st.subheader("🌱 Chia sẻ hành vi xanh của bạn")
+            typ = st.selectbox("Loại hành vi",["Nhặt rác","Tiết kiệm điện","Tái chế giấy","Đi xe đạp","Khác
