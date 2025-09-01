@@ -73,7 +73,17 @@ def show_dashboard(user):
         st.title("🧑‍🎓 Trang Ban cán sự lớp")
 st.write("Cộng/trừ điểm hành vi xanh cho học sinh.")
 
-    elif role == "Học sinh":
+  if role == "Giáo viên quản lý":
+    st.title("📊 Giao diện Giáo viên Quản lý")
+    st.write("Xem điểm thi đua của tất cả các lớp.")
+elif role == "Ban cán sự lớp":
+    st.title("📝 Giao diện Ban cán sự lớp")
+    st.write("Quản lý điểm thi đua của lớp mình.")
+elif role == "Học sinh":
+    st.title("👩‍👩‍👧‍👦 Giao diện Học sinh")
+    st.write("Xem và đóng góp điểm hành vi xanh cho bản thân.")
+else:
+    st.warning("Vui lòng chọn chức vụ để tiếp tục!")
         st.title("👩‍👩‍👧‍👦 Giao diện Học sinh")
         st.write("Xem điểm cá nhân và điểm lớp.")
 
