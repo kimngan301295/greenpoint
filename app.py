@@ -66,8 +66,8 @@ def seed_data():
 # ------------------------
 # Init session / data
 # ------------------------
-if "app_data" not in st.session_state:
-    st.session_state["app_data"] = load_data()
+if "app_data" not in st.rerun().:
+    st.rerun().["app_data"] = load_data()
 else:
     # ensure we have data even if file empty
     if not isinstance(st.session_state["app_data"], dict):
@@ -174,7 +174,7 @@ def auth_page():
                 st.session_state["current_user_id"] = user.get("id")
                 st.session_state["page"] = "dashboard"
                 st.success(f"Chào {user.get('name')} — bạn đã đăng nhập")
-                st.experimental_rerun()
+                st.rerun().
             else:
                 st.error("Sai số điện thoại hoặc mật khẩu")
 
@@ -212,7 +212,7 @@ def auth_page():
                         st.success("Đăng ký thành công — bạn đã được đăng nhập")
                         st.session_state["current_user_id"] = user.get("id")
                         st.session_state["page"] = "dashboard"
-                        st.experimental_rerun()
+                        st.rerun().
 
 # ------------------------
 # Dashboard (role-based)
@@ -222,7 +222,7 @@ def dashboard_page():
     user = find_user_by_id(uid)
     if not user:
         st.session_state["page"] = "auth"
-        st.experimental_rerun()
+        st.rerun().
         return
 
     # Sidebar: info + logout + navigation
@@ -234,7 +234,7 @@ def dashboard_page():
     if st.sidebar.button("Đăng xuất"):
         st.session_state["current_user_id"] = None
         st.session_state["page"] = "auth"
-        st.experimental_rerun()
+        st.rerun().
 
     page = st.sidebar.radio("Trang", ["Bảng chính", "Bảng xếp hạng"])
 
@@ -278,7 +278,7 @@ def dashboard_page():
                 img_bytes = img.read() if img is not None else None
                 add_action(user.get("id"), user.get("classId"), user.get("schoolId"), typ, desc.strip(), img_bytes, pts_map.get(typ,1))
                 st.success("Gửi thành công — chờ Ban cán sự duyệt (khuyến khích phản hồi tích cực).")
-                st.experimental_rerun()
+                st.rerun().
 
     # ------------------------
     # Ban cán sự lớp (monitor)
@@ -303,16 +303,16 @@ def dashboard_page():
             if col1.button("✔ Duyệt", key=f"ap_{a.get('id')}"):
                 update_action(a.get("id"), {"status": "approved"})
                 st.success("Đã duyệt — điểm sẽ được cộng.")
-                st.experimental_rerun()
+                st.rerun().
             if col2.button("✖ Từ chối", key=f"rej_{a.get('id')}"):
                 update_action(a.get("id"), {"status": "rejected"})
                 st.info("Đã từ chối.")
-                st.experimental_rerun()
+                st.rerun().
             if col3.button("⚠ Trừ điểm", key=f"pen_{a.get('id')}"):
                 add_action(a.get("userId"), a.get("classId"), a.get("schoolId"), "Penalty", "Trừ điểm (quyết định cán sự)", None, -2)
                 update_action(a.get("id"), {"status": "rejected"})
                 st.warning("Đã trừ điểm (penalty).")
-                st.experimental_rerun()
+                st.rerun().
 
     # ------------------------
     # Giáo viên chủ nhiệm
