@@ -56,7 +56,7 @@ def find_user_by_phone(phone):
 
 def find_user_by_id(uid):
     for u in st.session_state["data"]["users"]:
-if u.get("id") == uid:
+      if u.get("id") == uid:
             return u
     return None
 
