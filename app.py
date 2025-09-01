@@ -6,54 +6,95 @@ import streamlit as st
 st.set_page_config(page_title="Thi đua xanh", layout="wide")
 
 # ------------------------
-# THANH MENU
+# DATABASE GIẢ LẬP
 # ------------------------
-menu = st.sidebar.radio(
-    "Chọn giao diện",
-    ["🏫 Ban quản lý nhà trường", "👨‍🏫 Giáo viên chủ nhiệm", "🧑‍🎓 Ban cán sự lớp", "👩‍👩‍👧‍👦 Học sinh"]
-)
+if "users" not in st.session_state:
+    st.session_state.users = []  # lưu danh sách tài khoản
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None
 
 # ------------------------
-# BAN QUẢN LÝ NHÀ TRƯỜNG
+# HÀM ĐĂNG KÝ
 # ------------------------
-if menu == "🏫 Ban quản lý nhà trường":
-    st.title("🏫 Trang quản lý thi đua toàn trường")
-    province = st.selectbox("Chọn Tỉnh/Thành phố", ["TP.HCM", "Hà Nội", "Đà Nẵng"])
-    district = st.selectbox("Chọn Quận/Huyện", ["Quận 1", "Quận 2", "Quận 3"])
-    school = st.selectbox("Chọn Trường", ["THCS A", "THCS B", "THCS C"])
-    st.subheader(f"Điểm thi đua của {school}")
-    st.progress(0.75)  # ví dụ lớp đạt 75%
+def register():
+    st.title("📌 Đăng ký tài khoản")
+    with st.form("register_form"):
+        name = st.text_input("Họ và tên")
+        phone = st.text_input("Số điện thoại")
+        password = st.text_input("Mật khẩu", type="password")
+        role = st.selectbox("Chức vụ", ["Học sinh", "Ban cán sự lớp", "Giáo viên chủ nhiệm", "Ban quản lý nhà trường"])
+        province = st.text_input("Tỉnh/Thành phố")
+        school = st.text_input("Tên trường")
+        submit = st.form_submit_button("Đăng ký")
+
+    if submit:
+        st.session_state.users.append({
+            "name": name,
+            "phone": phone,
+            "password": password,
+            "role": role,
+            "province": province,
+            "school": school
+        })
+        st.success("✅ Đăng ký thành công! Hãy đăng nhập.")
+        st.session_state.page = "login"
 
 # ------------------------
-# GIÁO VIÊN CHỦ NHIỆM
+# HÀM ĐĂNG NHẬP
 # ------------------------
-elif menu == "👨‍🏫 Giáo viên chủ nhiệm":
-    st.title("👨‍🏫 Trang quản lý của GVCN")
-    st.write("📊 Xem và xác nhận điểm thi đua của lớp mình.")
+def login():
+    st.title("🔑 Đăng nhập")
+    with st.form("login_form"):
+        phone = st.text_input("Số điện thoại")
+        password = st.text_input("Mật khẩu", type="password")
+        submit = st.form_submit_button("Đăng nhập")
 
-    st.metric("Điểm lớp", "120", "👍 Đạt yêu cầu")
-    st.dataframe({
-        "Học sinh": ["Nguyễn A", "Trần B", "Lê C"],
-        "Điểm tuần": [15, 25, 8]
-    })
-
-# ------------------------
-# BAN CÁN SỰ LỚP
-# ------------------------
-elif menu == "🧑‍🎓 Ban cán sự lớp":
-    st.title("🧑‍🎓 Trang quản lý của Ban cán sự")
-    st.write("✅ Cộng điểm hoặc trừ điểm hành vi xanh cho thành viên lớp.")
-    name = st.selectbox("Chọn học sinh", ["Nguyễn A", "Trần B", "Lê C"])
-    action = st.radio("Hành động", ["Cộng điểm", "Trừ điểm"])
-    points = st.number_input("Số điểm", 1, 10, 1)
-    if st.button("Xác nhận"):
-        st.success(f"Đã {action.lower()} {points} điểm cho {name}")
+    if submit:
+        for user in st.session_state.users:
+            if user["phone"] == phone and user["password"] == password:
+                st.session_state.current_user = user
+                st.success(f"Xin chào {user['name']} ({user['role']}) 👋")
+                return
+        st.error("❌ Sai thông tin đăng nhập!")
 
 # ------------------------
-# HỌC SINH
+# TRANG GIAO DIỆN THEO CHỨC VỤ
 # ------------------------
-elif menu == "👩‍👩‍👧‍👦 Học sinh":
-    st.title("👩‍👩‍👧‍👦 Giao diện Học sinh")
-    st.write("📌 Xem điểm cá nhân và đóng góp cho lớp.")
-    st.metric("Điểm tuần của bạn", "18", "⚠️ Cần cố gắng")
-    st.metric("Điểm lớp", "120", "👍 Đạt chuẩn")
+def show_dashboard(user):
+    role = user["role"]
+    st.sidebar.write(f"👤 {user['name']} ({role})")
+    st.sidebar.button("Đăng xuất", on_click=lambda: st.session_state.update({"current_user": None, "page": "login"}))
+
+    if role == "Ban quản lý nhà trường":
+        st.title("🏫 Trang quản lý thi đua toàn trường")
+        st.write("Quản lý tất cả trường, quận, tỉnh.")
+
+    elif role == "Giáo viên chủ nhiệm":
+        st.title("👨‍🏫 Trang quản lý của GVCN")
+        st.write("Xem và xác nhận điểm thi đua của lớp mình.")
+
+    elif role == "Ban cán sự lớp":
+        st.title("🧑‍🎓 Trang Ban cán sự lớp")
+        st.write("Cộng/trừ điểm hành vi xanh cho học sinh.")
+
+    elif role == "Học sinh":
+st.title("👩‍👩‍👧‍👦 Giao diện Học sinh")
+        st.write("Xem điểm cá nhân và điểm lớp.")
+
+# ------------------------
+# LOGIC ĐIỀU HƯỚNG
+# ------------------------
+if "page" not in st.session_state:
+    st.session_state.page = "login"
+
+if st.session_state.current_user:
+    show_dashboard(st.session_state.current_user)
+else:
+    if st.session_state.page == "login":
+        login()
+        st.write("Chưa có tài khoản?")
+        if st.button("👉 Đăng ký ngay"):
+            st.session_state.page = "register"
+    elif st.session_state.page == "register":
+        register()
+
